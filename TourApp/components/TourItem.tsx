@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { formatDate, getSeatLabel } from '../utils/tour';
 
+// Khai báo kiểu Tour (Câu 3a)
 export interface Tour {
   id: string;
   name: string;
@@ -20,33 +21,39 @@ export interface Tour {
   isFavorite: boolean;
 }
 
+// Khai báo kiểu Props truyền vào component TourItem (Câu 3a)
 export interface TourItemProps {
-  tour: Tour;
-  compact?: boolean;
-  onPress: (tour: Tour) => void;
-  onToggleFavorite: (id: string, next: boolean) => void;
+  tour: Tour;                                                     // Dữ liệu tour hiển thị
+  compact?: boolean;                                              // Bố cục rút gọn (mặc định false)
+  onPress: (tour: Tour) => void;                                  // Sự kiện khi bấm vào thẻ tour
+  onToggleFavorite: (id: string, next: boolean) => void;          // Sự kiện khi bấm vào nút tim
 }
 
 function TourItem({
   tour,
-  compact = false,
+  compact = false, // Mặc định là false (bố cục ngang đầy đủ)
   onPress,
   onToggleFavorite,
 }: TourItemProps) {
+  // Kiểm tra nếu số chỗ <= 3 để đổi màu cảnh báo đỏ
   const isLimitedSeat = tour.seats <= 3;
 
   return (
+    // Kết hợp style mảng: nếu compact=true thì áp dụng thêm style containerCompact (Câu 4a, 4b)
     <View style={[styles.container, compact && styles.containerCompact]}>
+      {/* Vùng nhấn chính của thẻ: khi bấm gọi onPress hiển thị Alert */}
       <TouchableOpacity
         style={[styles.contentTouch, compact && styles.contentTouchCompact]}
         activeOpacity={0.7}
         onPress={() => onPress(tour)}
       >
+        {/* Khung chứa ảnh: khi compact=true thì có position relative để nút tim đè lên */}
         <View style={compact ? styles.imageWrapperCompact : undefined}>
           <Image
             source={{ uri: tour.image }}
             style={[styles.image, compact && styles.imageCompact]}
           />
+          {/* Nút tim khi compact=true: đặt đè lên góc phải trên ảnh */}
           {compact && (
             <TouchableOpacity
               testID="fav-btn"
@@ -65,7 +72,9 @@ function TourItem({
           )}
         </View>
 
+        {/* Khung thông tin tour */}
         <View style={[styles.info, compact && styles.infoCompact]}>
+          {/* Tên tour: compact thì giới hạn 1 dòng, thường thì tối đa 2 dòng */}
           <Text
             style={[styles.name, compact && styles.nameCompact]}
             numberOfLines={compact ? 1 : 2}
@@ -73,18 +82,22 @@ function TourItem({
             {tour.name}
           </Text>
 
+          {/* Thành phố: CHỈ HIỂN THỊ khi compact=false (Câu 4b yêu cầu ẩn khi compact=true) */}
           {!compact && <Text style={styles.city}>{tour.city}</Text>}
 
+          {/* Ngày khởi hành và số ngày: Ẩn khi compact=true */}
           {!compact && (
             <Text style={styles.departure}>
               📅 {formatDate(tour.departure)} · {tour.days} ngày
             </Text>
           )}
 
+          {/* Dòng giá tiền và số chỗ */}
           <View style={[styles.bottomRow, compact && styles.bottomRowCompact]}>
             <Text style={[styles.price, compact && styles.priceCompact]}>
               {tour.price.toLocaleString('vi-VN')} ₫
             </Text>
+            {/* Nhãn số chỗ: Ẩn khi compact=true; đổi màu đỏ khi <= 3 chỗ */}
             {!compact && (
               <Text style={[styles.seats, isLimitedSeat && styles.seatsWarning]}>
                 {getSeatLabel(tour.seats)}
@@ -94,6 +107,7 @@ function TourItem({
         </View>
       </TouchableOpacity>
 
+      {/* Nút tim khi compact=false: nằm riêng biệt ở mép phải (Câu 3d) */}
       {!compact && (
         <TouchableOpacity
           testID="fav-btn"
@@ -109,7 +123,9 @@ function TourItem({
   );
 }
 
+// Bảng định nghĩa kiểu dáng style dùng StyleSheet.create (Câu 4a)
 const styles = StyleSheet.create({
+  // Style cho thẻ thường (compact = false): bố cục ngang
   container: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -121,6 +137,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingRight: 8,
   },
+  // Style ghi đè cho thẻ rút gọn (compact = true): thẻ dọc chiều rộng 160
   containerCompact: {
     flexDirection: 'column',
     width: 160,
@@ -152,6 +169,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#eee',
   },
+  // Ảnh khi compact: chiếm hết chiều ngang thẻ với tỉ lệ 4:3
   imageCompact: {
     width: '100%',
     height: undefined,
@@ -211,13 +229,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   seatsWarning: {
-    color: '#D32F2F',
+    color: '#D32F2F', // Màu đỏ cảnh báo khi hết chỗ hoặc <= 3 chỗ
   },
   favBtn: {
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Nút tim đè lên góc phải trên ảnh khi compact=true (Câu 4b)
   favBtnCompact: {
     position: 'absolute',
     top: 6,
@@ -235,8 +254,9 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   favIconActive: {
-    color: '#E53935',
+    color: '#E53935', // Tim đỏ khi isFavorite = true
   },
 });
 
+// Câu 3a: Export component qua React.memo để tối ưu render
 export default React.memo(TourItem);

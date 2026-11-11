@@ -1,7 +1,9 @@
 /// <reference types="jest" />
 import { groupByCity, formatDate, getSeatLabel, Tour } from '../utils/tour';
 
+// Bộ kiểm thử đơn vị (Unit Test) cho các hàm tiện ích trong utils/tour.ts
 describe('Unit Test: tour utils', () => {
+  // Dữ liệu giả lập (Mock data) gồm nhiều tour thuộc các thành phố và ngày khác nhau
   const sampleTours: Tour[] = [
     {
       id: '1',
@@ -60,30 +62,37 @@ describe('Unit Test: tour utils', () => {
     },
   ];
 
+  // Câu 7a: Kiểm tra hàm groupByCity
   test('groupByCity: đúng số nhóm, thứ tự A-Z và thứ tự ngày tăng dần', () => {
     const sections = groupByCity(sampleTours);
 
+    // 1. Kiểm tra đúng số nhóm thành phố (Đà Lạt, Đà Nẵng, Hà Nội => 3 nhóm)
     expect(sections).toHaveLength(3);
 
+    // 2. Kiểm tra thứ tự bảng chữ cái tên thành phố từ A -> Z
     expect(sections[0].title).toBe('Đà Lạt');
     expect(sections[1].title).toBe('Đà Nẵng');
     expect(sections[2].title).toBe('Hà Nội');
 
+    // 3. Kiểm tra thứ tự ngày khởi hành trong cùng nhóm Đà Lạt (ngày 05/11 trước 15/11)
     const daLatTours = sections[0].data;
     expect(daLatTours).toHaveLength(2);
     expect(daLatTours[0].departure).toBe('2026-11-05');
     expect(daLatTours[1].departure).toBe('2026-11-15');
 
+    // 4. Kiểm tra thứ tự ngày khởi hành trong cùng nhóm Hà Nội (ngày 10/11 trước 20/11)
     const haNoiTours = sections[2].data;
     expect(haNoiTours).toHaveLength(2);
     expect(haNoiTours[0].departure).toBe('2026-11-10');
     expect(haNoiTours[1].departure).toBe('2026-11-20');
   });
 
+  // Câu 7b: Kiểm tra hàm formatDate
   test('formatDate: định dạng ngày YYYY-MM-DD sang DD/MM/YYYY', () => {
     expect(formatDate('2026-11-05')).toBe('05/11/2026');
   });
 
+  // Câu 7b: Kiểm tra hàm getSeatLabel tại các giá trị biên 0, 3, 4
   test('getSeatLabel: kiểm tra các giá trị biên 0, 3, 4', () => {
     expect(getSeatLabel(0)).toBe('Hết chỗ');
     expect(getSeatLabel(3)).toBe('Chỉ còn 3 chỗ');

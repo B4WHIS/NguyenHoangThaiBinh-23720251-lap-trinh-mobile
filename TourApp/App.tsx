@@ -16,14 +16,20 @@ import { Tour, groupByCity, formatDate } from './utils/tour';
 import { INITIAL_TOURS } from './data';
 import TourItem from './components/TourItem';
 
+// Đường dẫn API MockAPI phục vụ GET và PUT
 const API_URL = 'https://6ace1c08f338359cf1c31d6f.mockapi.io/tours';
 
 export default function App() {
+  // Quản lý danh sách tour lấy từ máy chủ
   const [tours, setTours] = useState<Tour[]>([]);
+  // Trạng thái đang tải dữ liệu lần đầu (hiển thị ActivityIndicator)
   const [loading, setLoading] = useState<boolean>(true);
+  // Trạng thái đang kéo xuống làm mới (RefreshControl)
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  // Từ khóa tìm kiếm nhập từ ô TextInput (Câu 1c)
   const [searchText, setSearchText] = useState<string>('');
 
+  // Hàm gọi API lấy danh sách tour (GET)
   const fetchTours = async () => {
     try {
       const response = await fetch(API_URL);
@@ -31,6 +37,7 @@ export default function App() {
         const data = await response.json();
         setTours(data);
       } else {
+        // Nếu API lỗi, dùng dữ liệu mẫu dự phòng
         setTours(INITIAL_TOURS);
       }
     } catch (error) {
@@ -41,15 +48,18 @@ export default function App() {
     }
   };
 
+  // Tải dữ liệu tour khi component được mount lần đầu
   useEffect(() => {
     fetchTours();
   }, []);
 
+  // Câu 6b: Hàm xử lý kéo xuống để làm mới (giữ nguyên từ khóa tìm kiếm)
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchTours();
   };
 
+  // Câu 3d: Khi bấm vào thẻ tour, hiển thị Alert thông tin chi tiết
   const handlePressTour = (tour: Tour) => {
     Alert.alert(
       'Thông tin tour',
@@ -57,12 +67,15 @@ export default function App() {
     );
   };
 
+  // Câu 5: Xử lý cập nhật yêu thích (PUT) với Cập nhật lạc quan & Hoàn tác lỗi
   const handleToggleFavorite = async (id: string, next: boolean) => {
+    // 1. Cập nhật lạc quan (Optimistic Update): đổi state ngay lập tức trên giao diện
     setTours((prev) =>
       prev.map((t) => (t.id === id ? { ...t, isFavorite: next } : t))
     );
 
     try {
+      // 2. Gửi yêu cầu PUT lên MockAPI
       const res = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: {
@@ -75,6 +88,7 @@ export default function App() {
         throw new Error('Lỗi cập nhật API');
       }
     } catch (error) {
+      // 3. Hoàn tác (Rollback): nếu API lỗi, trả lại trạng thái cũ và báo Alert (Câu 5c)
       setTours((prev) =>
         prev.map((t) => (t.id === id ? { ...t, isFavorite: !next } : t))
       );
@@ -85,22 +99,26 @@ export default function App() {
     }
   };
 
+  // Câu 6a: Lọc tour theo tên bằng useMemo (không phân biệt hoa thường, cắt khoảng trắng trim)
   const filteredTours = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
     if (!keyword) return tours;
     return tours.filter((t) => t.name.toLowerCase().includes(keyword));
   }, [tours, searchText]);
 
+  // Câu 2a & 6a: Gom nhóm các tour theo thành phố và tự động ẩn các nhóm không có tour nào
   const sections = useMemo(() => {
     return groupByCity(filteredTours).filter(
       (section) => section.data.length > 0
     );
   }, [filteredTours]);
 
+  // Câu 4c & 6a: Lọc danh sách tour yêu thích (từ tours gốc để không bị ảnh hưởng bởi ô tìm kiếm)
   const favoriteTours = useMemo(() => {
     return tours.filter((t) => t.isFavorite);
   }, [tours]);
 
+  // Câu 4c: Header chứa mục "Tour yêu thích (n)" dạng FlatList ngang
   const renderFavoriteHeader = () => (
     <View style={styles.favoriteSection}>
       <Text style={styles.favoriteTitle}>
@@ -118,7 +136,7 @@ export default function App() {
           renderItem={({ item }) => (
             <TourItem
               tour={item}
-              compact={true}
+              compact={true} // Dùng bố cục rút gọn cho hàng ngang
               onPress={handlePressTour}
               onToggleFavorite={handleToggleFavorite}
             />
@@ -130,10 +148,13 @@ export default function App() {
   );
 
   return (
+    // Câu 1a: Toàn bộ ứng dụng bọc trong SafeAreaProvider
     <SafeAreaProvider>
+      {/* Câu 1b: Màn hình chính dùng SafeAreaView và View */}
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="dark" />
 
+        {/* Câu 1c: Phần Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Tour Việt</Text>
           <Text style={styles.studentInfo}>23720251 - Nguyễn Hoàng Thái Bình</Text>
@@ -148,18 +169,21 @@ export default function App() {
           </View>
         </View>
 
+        {/* Phần thân danh sách */}
         <View style={styles.content}>
+          {/* Câu 2c: Hiển thị ActivityIndicator khi đang tải dữ liệu */}
           {loading ? (
             <View style={styles.centerContainer}>
               <ActivityIndicator size="large" color="#0066CC" />
               <Text style={styles.loadingText}>Đang tải danh sách tour...</Text>
             </View>
           ) : (
+            // Câu 2b: Dùng SectionList hiển thị các nhóm tour
             <SectionList
               sections={sections}
               keyExtractor={(item) => item.id}
-              stickySectionHeadersEnabled={true}
-              ListHeaderComponent={renderFavoriteHeader}
+              stickySectionHeadersEnabled={true} // Tiêu đề nhóm dính trên cùng khi cuộn
+              ListHeaderComponent={renderFavoriteHeader} // Mục tour yêu thích ở trên cùng
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -167,6 +191,7 @@ export default function App() {
                   colors={['#0066CC']}
                 />
               }
+              // Câu 6b: Thông báo khi tìm kiếm không có kết quả
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>
@@ -174,6 +199,7 @@ export default function App() {
                   </Text>
                 </View>
               }
+              // Tiêu đề của từng nhóm thành phố: "Đà Lạt · 3 tour"
               renderSectionHeader={({ section: { title, data } }) => (
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionHeaderText}>
@@ -181,10 +207,11 @@ export default function App() {
                   </Text>
                 </View>
               )}
+              // Hiển thị từng tour bằng component TourItem
               renderItem={({ item }) => (
                 <TourItem
                   tour={item}
-                  compact={false}
+                  compact={false} // Bố cục ngang đầy đủ
                   onPress={handlePressTour}
                   onToggleFavorite={handleToggleFavorite}
                 />
